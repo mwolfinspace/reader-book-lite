@@ -1,0 +1,37 @@
+{
+  "name": "reader-book-lite",
+  "author": "community",
+  "url": "https://github.com/mwolfinspace/reader-book-lite",
+  "version": "1.0.0",
+  "minAppVersion": "2.10.14",
+  "disabledInPublish": true,
+  "backends": [
+    "all"
+  ],
+  "frontends": [
+    "all"
+  ],
+  "displayName": {
+    "default": "Reader Book Lite",
+    "en_US": "Reader Book Lite",
+    "zh_CN": "Reader Book Lite"
+  },
+  "description": {
+    "default": "A streamlined ebook reader supporting PDF/EPUB/MOBI/TXT formats with annotations, bookmarks, and multiple themes",
+    "en_US": "A streamlined ebook reader supporting PDF/EPUB/MOBI/TXT formats with annotations, bookmarks, and multiple themes",
+    "zh_CN": "A streamlined ebook reader supporting PDF/EPUB/MOBI/TXT formats with annotations, bookmarks, and multiple themes"
+  },
+  "readme": {
+    "default": "README.md",
+    "en_US": "README.md",
+    "zh_CN": "README_zh_CN.md"
+  },
+  "keywords": [
+    "reading", "ebook", 
+    "pdf", "epub", "mobi", "txt",
+    "annotation", "note", "bookmark",
+    "dictionary",
+    "theme"
+  ]
+}
+
