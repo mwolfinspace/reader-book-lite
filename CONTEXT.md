@@ -165,6 +165,19 @@ All Chinese UI strings replaced with English equivalents across the minified bun
 - Translation component unmounts/remounts on every panel toggle (inherent to `v-if` usage in source)
 - Remaining ~2081 CJK characters are conversion data pairs and should NOT be modified
 
+## Bug Fixes
+
+### PDF Text Select Mode Not Working on First Open
+
+**Root cause**: `PdfToolbar.vue` function `applyMode()` has an early-return guard (`if (toolMode.value === mode) return`) that skips `applyContainerMode()` when the mode hasn't changed. Since `toolMode` ref initializes to `'text'` and default settings also store `toolMode: 'text'`, the first `applyMode('text')` call (from `applyToolbarSettings`) returns immediately without calling `applyContainerMode('text')`. The PDF viewer container never gets explicit `user-select:text` / `cursor:text` inline styles, making text selection non-functional until the user toggles to hand tool and back.
+
+**Fix** (applied to `index.js`, function `Je` = `applyMode`):
+```
+Before: Je=(ge,ue=!0)=>{Q.value!==ge&&(Q.value=ge,qe(ge),ze(ge),ue&&ge!=="ink"&&ge!=="shape"&&k0())}
+After:  Je=(ge,ue=!0)=>{qe(ge),Q.value!==ge&&(Q.value=ge,ze(ge),ue&&ge!=="ink"&&ge!=="shape"&&k0())}
+```
+`qe(ge)` (`applyContainerMode`) is moved outside the conditional guard so it always executes, ensuring container styles (`user-select`, `cursor`, scroll-drag listeners) are set on every call regardless of whether the mode value changed.
+
 ## Next Potential Work
 
 1. Expose the English-only i18n toggle as a setting option
