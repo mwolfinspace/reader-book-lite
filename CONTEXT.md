@@ -165,6 +165,10 @@ All Chinese UI strings replaced with English equivalents across the minified bun
 - Translation component unmounts/remounts on every panel toggle (inherent to `v-if` usage in source)
 - Remaining ~2081 CJK characters are conversion data pairs and should NOT be modified
 
+## Remaining CJK Characters
+
+~1904 CJK characters remain in `index.js`. These are overwhelmingly **simplified ↔ traditional Chinese conversion data pairs** (~900 pairs like `学學`, `汉漢`, `语語`) — data, not visible UI. A few dozen non-conversion strings remain in specialized features (dictionary/annotation Chinese text analysis patterns like `复|单|口|旧`, stats labels like `读过`, `累计`, book metadata fields like `三体` which is content, not UI).
+
 ## Bug Fixes
 
 ### PDF Text Select Mode Not Working on First Open
