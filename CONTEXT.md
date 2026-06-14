@@ -1,13 +1,13 @@
 # Reader Book Lite — Full Session Context
 
-> This file contains the complete modification history for AI assistants to resume work. Last updated: 2026-06-14.
+> This file contains the complete modification history for AI assistants to resume work. Last updated: 2026-06-14 (session 2).
 
 ## Project Goal
 
 Fork `siyuan-sireader` into `reader-book-lite` with:
 - License gating removed (all features free, no purchase/activation/upgrade prompts)
 - English-only UI (no visible Chinese strings)
-- Default translation target: Vietnamese (`vi`) instead of Chinese (`zh-CN`)
+- Default translation target: English (`en`) (was Vietnamese `vi` which was originally Chinese `zh-CN`)
 - No Membership section in settings (replaced with hidden div preserving template ref binding)
 - Plugin name: `reader-book-lite`, version 1.0.0
 
@@ -61,30 +61,31 @@ These bypass all 16 feature-tier checks in `$oe`. The `can()` function is `stati
 ### 4. Default Translation Language
 
 **Function-level** (5 translation functions in `index.js`):
-- `e4e` (Google Translate): default `f` parameter → `"vi"`
-- `i4e` (Azure Translate): default `f` parameter → `"vi"`
-- `r4e` (Yandex Translate): default `f` parameter → `"vi"`
-- `n4e` (AI Free Translate): default `f` parameter → `"vi"`
-- `o4e` (AI Siyuan Translate): default `f` parameter → `"vi"`
+- `translateGoogle`: default `f` parameter → `"en"`
+- `translateAzure`: default `f` parameter → `"en"`
+- `translateYandex`: default `f` parameter → `"en"`
+- `translateAiFree`: default `f` parameter → `"en"`
+- `translateAiSiyuan`: default `f` parameter → `"en"`
 
 **Component-level** (Translate component):
-- `b=i0("zh-CN")` → `b=i0(window.__sireader_tgt||"vi")`
-- Language options array: `["vi","Tiếng Việt"]` moved to first position (default selection)
+- `b=i0("zh-CN")` → `b=i0(window.__sireader_tgt||"en")`
+- Language options array: first entry is still `["vi","Tiếng Việt"]` but default target is now `"en"`
 
 **Engine names** (English):
 - `"AI Translate (Free)"` instead of Chinese name
 - `"AI Translate (Siyuan)"` instead of Chinese name
 - AI Siyuan prompt in English
 
-### 5. Target Language Persistence Fix
+### 5. Target Language Default and Order
 
-**Root cause**: Translate component in `MarkPanel.vue` uses `v-if` (`<Translate v-if="state.panel === 'translate'" />`) — component is destroyed/recreated each time panel opens, resetting `b` ref to initial value.
+**Default**: `tgt = ref("zh-CN")` → `b = i0(window.__sireader_tgt||"en")` — reads `window.__sireader_tgt` for session persistence, falls back to `"en"`.
 
-**Fix** (applied to `index.js`):
-- Init: `b=i0("vi")` → `b=i0(window.__sireader_tgt||"vi")`
-- On change: `onClick:te=>{b.value=H,Q.value=!1,L()}` → `onClick:te=>{window.__sireader_tgt=H,b.value=H,Q.value=!1,L()}`
+**Language order** in the dropdown: `[["vi","Tiếng Việt"],["en","English"],["zh-CN","Chinese"],...]` — Vietnamese first, then English, then the rest.
 
-Uses `window.__sireader_tgt` global to persist across component mounts for the session duration. Language resets to `"vi"` default on page reload.
+**Session persistence via `window.__sireader_tgt`**:
+- Init: `b = i0(window.__sireader_tgt||"en")`
+- On change: `onClick:te=>{window.__sireader_tgt=H,b.value=H,Q.value=!1,L()}` — saves to `window.__sireader_tgt`, sets target, closes dropdown, translates.
+- Language survives within the same browser tab/session as long as the page isn't fully reloaded. Writes to a `window` property (sync, no async, no settings save), safe for sandboxed environments.
 
 ### 6. English-Only UI (~637 string replacements)
 
@@ -142,18 +143,164 @@ All Chinese UI strings replaced with English equivalents across the minified bun
 
 ## Critical Code Locations in `index.js`
 
+### General
+
 | Location | What |
 |----------|------|
 | `can()` bypass | Class `j1`, `static can(f,c)` → `return!0` |
 | Activation no-op | `_openLicenseContent` → `()=>{}` |
 | Upgrade no-op | `showUpgrade` → `L=>{}` |
 | Membership section | `O("ul",{ref_key:"licenseRef"...})` → hidden div |
-| Target language init | `b=i0(window.__sireader_tgt||"vi")` |
-| Target language persist | `onClick:te=>{window.__sireader_tgt=H,b.value=H,...}` |
-| Source-combo target array | `[["vi","Tiếng Việt"],["en","English"],...` (first entry = default) |
-| Translate functions (5) | Function signatures default `f` parameter to `"vi"` |
-| Language options list | `[["auto","Auto Detect"],["zh-CN","Chinese"],["en","English"]...` |
+| Translate functions (5) | Function signatures default `f` parameter to `"en"` |
 | Engine names | `"AI Translate (Free)"` and `"AI Translate (Siyuan)"` |
+
+### Translate Panel — Structural Map (all on line 772, 180161 chars)
+
+The entire Translate component definition, its scoped wrapper `D3e`, the popup host code, and the MarkPanel component all live on line 772. Use `IndexOf()` on the line string to jump to any position.
+
+#### Class/scoped-id definitions (around pos 26000–26444)
+
+| Minified name | Value | Position | Purpose |
+|---------------|-------|----------|---------|
+| `b3e` | `{class:"tr-section"}` | 26125 | Source section wrapper |
+| `w3e` | `{class:"tr-head"}` | 26150 | Source section header row |
+| `m3e` | `{class:"tr-select"}` | 26172 | Source dropdown container |
+| `v3e` | `["onClick"]` | 26196 | Source dropdown items dynamic attrs |
+| `y3e` | `{class:"tr-text tr-src"}` | 26212 | Source text area |
+| `B3e` | `{class:"tr-section"}` | 26241 | Target section wrapper |
+| `x3e` | `{class:"tr-head"}` | 26266 | Target section header row |
+| `C3e` | `{class:"tr-select"}` | 26288 | Target dropdown container |
+| `E3e` | `["onClick"]` | 26312 | Target dropdown items dynamic attrs |
+| `S3e` | `{class:"tr-text tr-tgt"}` | 26328 | Target text/result area |
+| `_3e` | `{class:"tr-section"}` | 26357 | Engine section wrapper |
+| `I3e` | `{class:"tr-head"}` | 26382 | Engine section header row |
+| `Q3e` | `{class:"tr-select"}` | 26404 | Engine dropdown container |
+| `T3e` | `["onClick"]` | 26428 | Engine dropdown items dynamic attrs |
+
+#### Component definition (26444 → 29203)
+
+```
+TranslatePanel=k2({__name:"Translate",props:{text:{}},setup(u){
+  const f=u,
+    c=[["vi","Tiếng Việt"],["en","English"],["zh-CN","Chinese"],["ja","Japanese"],
+       ["ko","Korean"],["fr","Français"],["de","Deutsch"],["es","Español"],["ru","Русский"]],
+    d=engines,                     // translator engines object
+    p=i0("auto"),                  // src = ref("auto")
+    b=i0(window.__sireader_tgt||"en"), // tgt = ref() — session persisted
+    v=()=>{...},                   // getEngine() — reads window.__sireader_settings.translation.engine
+    B=i0(v()),                     // eng = ref(getEngine())
+    C=i0(""),                      // result = ref("")
+    E=i0(!1),                      // loading = ref(false)
+    I=i0(!1),                      // showSrc = ref(false)
+    Q=i0(!1),                      // showTgt = ref(false)
+    D=i0(!1),                      // showEng = ref(false)
+    F=y0(()=>{...}),               // srcName computed — "Auto detect" or lang name
+    V=y0(()=>{...}),               // tgtName computed — lang name or "English"
+    L=async()=>{...},              // translate() — calls d[eng].translate(text, tgt)
+    G=async W=>{...};              // setEngine() — saves to settings, calls L()
+  return xi(()=>f.text,()=>{       // watch on props.text — resets engine, calls L()
+    B.value=v(),I.value=!1,Q.value=!1,D.value=!1,L()
+  },{immediate:!0}),
+  (W,Z)=>(ne(),fe(F0,null,[        // render function — 3 sections
+    O("div",b3e,[...]),            // Source section
+    Z[10]||(Z[10]=O("div",{class:"tr-line"},null,-1)),
+    O("div",B3e,[...]),            // Target section
+    Z[11]||(Z[11]=O("div",{class:"tr-line"},null,-1)),
+    O("div",_3e,[...])             // Engine section
+  ]),64)
+}})
+```
+
+| What | Variable | Position | Edit pattern |
+|------|----------|----------|-------------|
+| Langs array | `c` | 26517 | `c=[["vi","Tiếng Việt"],["en","English"],...` |
+| Source lang ref init | `p=i0("auto")` | 26707 | `p=i0("auto")` |
+| Target lang ref init | `b=i0(...)` | 26720 | `b=i0(window.__sireader_tgt\|\|"en")` — session persisted |
+| Engine default func | `v=()=>{...}` | 26754 | Reads `window.__sireader_settings.translation.engine`, defaults to `"azure"` |
+| Engine ref init | `B=i0(v())` | ~26850 | Calls `v()` for initial engine |
+| Result ref init | `C=i0("")` | ~26880 | Empty string |
+| Loading ref init | `E=i0(!1)` | ~26890 | False |
+| showSrc ref | `I=i0(!1)` | ~26900 | Source dropdown visibility |
+| showTgt ref | `Q=i0(!1)` | ~26910 | Target dropdown visibility |
+| showEng ref | `D=i0(!1)` | ~26920 | Engine dropdown visibility |
+| srcName computed | `F=y0(()=>{...})` | ~26930 | Returns "Auto detect" or lang name |
+| tgtName computed | `V=y0(()=>{...})` | ~27050 | Returns lang name or "English" |
+| translate function | `L=async()=>{...}` | 27150 | Calls `d[B.value].translate(f.text,b.value)` |
+| setEngine function | `G=async W=>{...}` | 27266 | Saves engine to settings, calls `L()` |
+| Watch on text | `xi(()=>f.text,...)` | 27473 | Resets engine, closes dropdowns, calls `L()` |
+| Render function | `(W,Z)=>(ne(),...)` | ~27560 | Returns VNode tree |
+| **Source** `<span>` | `"Source"` | 27642 | Source section label |
+| **Source** dropdown button | `onClick:Z[0]\|\|...` | ~27700 | Toggles `I.value` (showSrc) |
+| **Source** dropdown items | `p.value=H` | ~27850 | Sets `src=code`, closes dropdown |
+| **Target** `<span>` | `"Target"` | 28251 | Target section label |
+| **Target** dropdown button | `onClick:Z[3]\|\|...` | ~28300 | Toggles `Q.value` (showTgt) |
+| **Target** dropdown items | `window.__sireader_tgt=H` | ~28554 | **PERSISTS** `window.__sireader_tgt=H,b.value=H,Q.value=!1,L()` |
+| **Target** result display | `"Translating..."` | 28658 | Loading state text |
+| **Target** fallback | `"Translation failed"` | 28684 | Error/empty result text |
+| **Engine** `<span>` | `"Engine"` | 28813 | Engine section label |
+| **Engine** dropdown button | `onClick:Z[5]\|\|...` | ~28860 | Toggles `D.value` (showEng) |
+| **Engine** dropdown items | `onClick:te=>G(X)` | ~29000 | Calls `setEngine(key)` |
+
+#### Scoped wrapper & usage (after definition)
+
+```
+D3e=vn(TranslatePanel,[["__scopeId","data-v-61fc17c8"]])     (pos 29203)
+```
+
+`vn` = `createVNode`. `D3e` is the scoped TranslatePanel used as `I.panel==="translate"?wr(D3e,{key:0,text:...})` inside the MarkPanel popup.
+
+#### Popup host (MarkPanel render, pos 44460)
+
+The translate panel is rendered inside MarkPanel's popup div:
+
+```
+I.showPanel?sr((ne(),fe("div",{
+  key:3,
+  initial:'{"opacity":0,"y":5}',
+  enter:'{"opacity":1,"y":0}',
+  class:"sr-popup sr-popup-panel",
+  style:ar(k0.value),
+  onClick:a0[8]||...
+},[O("div",Z3e,[
+  I.panel==="translate"?
+    (ne(),wr(D3e,{key:0,text:((Fi=I.selection)==null?void 0:Fi.text)||""},null,8,["text"])):
+    (ne(),wr(t8,{key:1,...}))   // t8 = MarkEditPanel
+])])),[[O0]])) : v0("",!0)
+```
+
+| What | Position | Notes |
+|------|----------|-------|
+| `I.showPanel?sr(` | 44460 | Popup visibility controlled by MarkPanel state |
+| `initial:'{...}'` | ~44497 | JSON-serialized animation config for `v-motion` |
+| `D3e` (TranslatePanel) | ~44640 | Used as `wr(D3e,{key:0,text:selection.text})` |
+| `O0` directive | ~44750 | `v-motion` directive reference |
+
+#### Minified names in translate panel
+
+| Minified | Meaning | Scope |
+|----------|---------|-------|
+| `f` | `props` (function arg) | setup function |
+| `c` | `langs` array | setup scope |
+| `d` | `engines` (translators object) | setup scope |
+| `p` | `src` ref | setup scope |
+| `b` | `tgt` ref | setup scope |
+| `v` | `getEngine()` function | setup scope |
+| `B` | `eng` ref | setup scope |
+| `C` | `result` ref | setup scope |
+| `E` | `loading` ref | setup scope |
+| `I` | `showSrc` ref | setup scope |
+| `Q` | `showTgt` ref | setup scope |
+| `D` | `showEng` ref | setup scope |
+| `F` | `srcName` computed | setup scope |
+| `V` | `tgtName` computed | setup scope |
+| `L` | `translate()` async function | setup scope |
+| `G` | `setEngine()` async function | setup scope |
+| `H` | `code` (dropdown item value) | click handler param |
+| `Z` | cache array (static vnode hoisting) | render function |
+| `W` | render function param (first = `$ctx`/setup scope) | render function |
+| `Z[0]`-`Z[6]` | cached handler closures | render function |
+| `Z[7]`-`Z[9]` | cached `<span>` vnodes (Source/Target/Engine labels) | render function |
+| `Z[10]`-`Z[11]` | cached `tr-line` divider vnodes | render function |
 
 ## Backup
 
@@ -161,7 +308,6 @@ All Chinese UI strings replaced with English equivalents across the minified bun
 
 ## Known Issues
 
-- Target language resets to `"vi"` on page/plugin reload (persists via `window.__sireader_tgt` global — session-only, not saved to SiYuan settings)
 - Translation component unmounts/remounts on every panel toggle (inherent to `v-if` usage in source)
 - Remaining ~2081 CJK characters are conversion data pairs and should NOT be modified
 
@@ -181,6 +327,39 @@ Before: Je=(ge,ue=!0)=>{Q.value!==ge&&(Q.value=ge,qe(ge),ze(ge),ue&&ge!=="ink"&&
 After:  Je=(ge,ue=!0)=>{qe(ge),Q.value!==ge&&(Q.value=ge,ze(ge),ue&&ge!=="ink"&&ge!=="shape"&&k0())}
 ```
 `qe(ge)` (`applyContainerMode`) is moved outside the conditional guard so it always executes, ensuring container styles (`user-select`, `cursor`, scroll-drag listeners) are set on every call regardless of whether the mode value changed.
+
+### Translate Popup Disappears on Scroll/Click Inside
+
+**Root cause**: `MarkPanel.vue` registers a capture-phase scroll listener at `window.addEventListener("scroll", closeAll, true)` (source: `MarkPanel.vue:360`). The `true` (capture phase) means this listener fires for ALL scroll events, including scrolls inside the translate popup (e.g., scrolling translation results in `.tr-tgt` which has `max-height:200px; overflow-y:auto`, or scrolling the language dropdown `.tr-menu` which has `max-height:240px; overflow-y:auto`). When the user tries to scroll inside the popup, `closeAll` fires, closing the panel. The popup reappears because the browser text selection is still active, triggering `checkSelection` on mouseup.
+
+**Fix** (applied to `index.js`, MarkPanel's `onMounted` scroll handler):
+```
+Before: window.addEventListener("scroll", nt, !0)
+        ...window.removeEventListener("scroll", nt, !0)  (in onUnmounted cleanup)
+After:  window.addEventListener("scroll", (e=>{e.target.closest(".sr-popup-panel")||nt(e)}), !0)
+        [removeEventListener removed — anonymous wrapper can't be matched]
+```
+The wrapped handler checks if the scroll event's target (the scrolled element) is inside `.sr-popup-panel`. If it is, `closeAll` is NOT called, allowing the popup to stay open and scroll normally. The corresponding `removeEventListener("scroll", nt, !0)` in `onUnmounted` was removed since the anonymous wrapped function cannot be cleanly removed. The MarkPanel/Reader component is long-lived, so the leak is negligible.
+
+**Minified name mappings**: `nt` = `closeAll`, `Vn` = `onMounted`, `ts` = `onUnmounted`
+
+### Translate Target Language Not Persisting Across Panel Toggle
+
+**Root cause**: The Translate component is mounted/destroyed each time via `v-if` on the popup (`I.showPanel`). The `tgt` ref was initialized with a hardcoded default `b=i0("en")`, resetting to English every time the panel reopened. The click handler only set `b.value=H` (local ref) without persisting elsewhere.
+
+**Fix** (applied to `index.js`, Translate component setup):
+1. **Init**: `b=i0("en")` → `b=i0(window.__sireader_tgt||"en")` — reads previously persisted value
+2. **Click handler**: `onClick:te=>{b.value=H,Q.value=!1,L()}` → `onClick:te=>{window.__sireader_tgt=H,b.value=H,Q.value=!1,L()}` — saves to `window.__sireader_tgt` before setting ref and translating
+
+Uses a simple `window` property for persistence — survives panel toggle within the same session/window, requires no async settings save.
+
+### Popup Animation `[object Object]` Attributes
+
+**Root cause**: MarkPanel's popup div uses `v-motion :initial="{opacity:0,y:5}" :enter="{opacity:1,y:0}"` (Vue template). The compiled VNode creates the div with these as DOM attributes via `fe("div",{...,initial:{opacity:0,y:5},enter:{opacity:1,y:0},...})`. Vue sets non-standard props as HTML attributes via `setAttribute()`, which stringifies objects to `[object Object]`. The `@vueuse/motion` directive then receives `"[object Object]"` instead of parseable JSON, breaking popup entrance/exit animations.
+
+**Fix** (applied to `index.js`, MarkPanel render function):
+- `initial:{opacity:0,y:5},enter:{opacity:1,y:0}` → `initial:'{"opacity":0,"y":5}',enter:'{"opacity":1,"y":0}'`
+- Serialized as JSON strings so `v-motion` can parse them back with `JSON.parse()`.
 
 ## Next Potential Work
 
