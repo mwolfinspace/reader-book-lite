@@ -386,6 +386,17 @@ The toolbar is rendered in MarkPanel's template (compiled into `index.js`). `che
 - Icon: `#iconSearch` (SiYuan-provided SVG sprite)
 - Inserted after translate button in the mark-menu children array at byte 2149269
 
+### 2026-06-14: Removed auto-translate bypass in openSelectionPanel
+- The `openSelectionPanel` function had a check:
+  ```javascript
+  if (window.__sireader_settings?.translation?.autoOnSelection && ...)
+    return setPanelState("translate", ...)
+  ```
+  This bypassed the selection toolbar and opened translate directly when `autoOnSelection` was enabled.
+- **Fix**: Removed the entire auto-translate condition block so the toolbar always appears on selection.
+- Users who want auto-translate-on-selection can still click the Translate button on the toolbar.
+- Location: `openSelectionPanel` function (`j0`), removed condition at byte 2139858–2140013.
+
 ## Next Potential Work
 
 1. Expose the English-only i18n toggle as a setting option
