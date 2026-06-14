@@ -361,6 +361,31 @@ Uses a simple `window` property for persistence — survives panel toggle within
 - `initial:{opacity:0,y:5},enter:{opacity:1,y:0}` → `initial:'{"opacity":0,"y":5}',enter:'{"opacity":1,"y":0}'`
 - Serialized as JSON strings so `v-motion` can parse them back with `JSON.parse()`.
 
+## Feature: Selection Popup Toolbar
+
+The selection popup toolbar (`.mark-menu`) already exists in `reader-book-lite` — it was ported from `siyuan-sireader`'s `MarkPanel.vue` but was not working due to the scroll handler bug (now fixed). It contains:
+
+1. **Note** (`#lucide-square-pen`) — creates a mark/annotation and opens editor
+2. **Mark** (`#iconMark`) — creates a quick highlight/annotation
+3. **Send to** (`#lucide-send`) — sends selection to a SiYuan document
+4. **Copy** (`#iconCopy`) — copies selected text to clipboard
+5. **TTS** (`#iconPlay`) — reads selection aloud (conditional on `ttsConfig.enabled`)
+6. **Dictionary** (`#iconLanguage`) — opens dictionary lookup
+7. **Translate** (`#iconTranslate`) — opens translate panel (calls `setPanelState("translate")`)
+8. **Search Google** (`#iconSearch`) — opens Google search in new tab
+
+The toolbar is rendered in MarkPanel's template (compiled into `index.js`). `checkSelection` is called on EPUB `mouseup`/`touchend` via `setupEpubKeyboard` (`dpe` function). PDF mode uses a different path: `initPdfAnnotationEvents` calls `showMenu` directly.
+
+**Minified name mappings**: `dpe` = `setupEpubKeyboard`, `ke` = `markPanelRef`, `I` = `state` (reactive), `nt` = `closeAll`, `j0` = `openSelectionPanel`, `b0` = `openMarkPanel`, `Ae` = `handleCopy`, `l0` = `handleTranslate`, `P0` = `setPanelState`
+
+## Edit History
+
+### 2026-06-14: Google Search button added to selection popup
+- Added 8th button to `.mark-menu` toolbar (Search Google)
+- Uses inline arrow function: `()=>window.open("https://www.google.com/search?q="+encodeURIComponent(I.text||""))`
+- Icon: `#iconSearch` (SiYuan-provided SVG sprite)
+- Inserted after translate button in the mark-menu children array at byte 2149269
+
 ## Next Potential Work
 
 1. Expose the English-only i18n toggle as a setting option
