@@ -1,6 +1,6 @@
 # Reader Book Lite — Full Session Context
 
-> This file contains the complete modification history for AI assistants to resume work. Last updated: 2026-06-14 (session 2).
+> This file contains the complete modification history for AI assistants to resume work. Last updated: 2026-06-15 (session 3).
 
 ## Project Goal
 
@@ -396,6 +396,15 @@ The toolbar is rendered in MarkPanel's template (compiled into `index.js`). `che
 - **Fix**: Removed the entire auto-translate condition block so the toolbar always appears on selection.
 - Users who want auto-translate-on-selection can still click the Translate button on the toolbar.
 - Location: `openSelectionPanel` function (`j0`), removed condition at byte 2139858–2140013.
+
+### 2026-06-15: Verify showUpgrade patch; add dictionaries/ to .gitignore
+- Discovered that `showUpgrade` function was **not** patched to no-op in the HEAD version
+  (`L=>{}` missing) — confirmed via git diff between HEAD (eb86484) and working tree
+- Applied the `showUpgrade` patch (`L=>{}`) to suppress "翻译需要升级会员" snackbar message
+- Added `dictionaries/` to `.gitignore` (~20MB of StarDict runtime data)
+- Confirmed scroll fix (`closest(".sr-popup-panel")` guard) is intact
+- Cleaned up temporary debug files (`tmp_*.js`, `tmp_queries_check.txt`)
+- Commit: `5c8409f` — pushed to `origin/master`
 
 ## Next Potential Work
 
