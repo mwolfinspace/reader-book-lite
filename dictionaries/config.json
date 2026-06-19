@@ -1,0 +1,46 @@
+{
+  "dicts": [
+    {
+      "id": "dict_tudien_en_vi",
+      "name": "tudien Anh-Việt tổng hợp (en-vi)",
+      "type": "stardict",
+      "enabled": true,
+      "files": {
+        "ifo": "/data/plugins/reader-book-lite/dictionaries/tudien-en-vi/tudien-stardict-en-vi-20260411.ifo",
+        "idx": "/data/plugins/reader-book-lite/dictionaries/tudien-en-vi/tudien-stardict-en-vi-20260411.idx",
+        "dz": "/data/plugins/reader-book-lite/dictionaries/tudien-en-vi/tudien-stardict-en-vi-20260411.dict.dz"
+      }
+    },
+    {
+      "id": "dict_stardict_en_vi",
+      "name": "en_vi",
+      "type": "stardict",
+      "enabled": true,
+      "files": {
+        "ifo": "/data/plugins/reader-book-lite/dictionaries/stardict_en_vi/en-vi.ifo",
+        "idx": "/data/plugins/reader-book-lite/dictionaries/stardict_en_vi/en-vi.idx",
+        "dz": "/data/plugins/reader-book-lite/dictionaries/stardict_en_vi/en-vi.dict.dz"
+      }
+    },
+    {
+      "id": "dict_stardict_vi_en",
+      "name": "star_vietanh",
+      "type": "stardict",
+      "enabled": true,
+      "files": {
+        "ifo": "/data/plugins/reader-book-lite/dictionaries/stardict_vi_en/vi-en.ifo",
+        "idx": "/data/plugins/reader-book-lite/dictionaries/stardict_vi_en/vi-en.idx",
+        "dz": "/data/plugins/reader-book-lite/dictionaries/stardict_vi_en/vi-en.dict.dz"
+      }
+    }
+  ],
+  "online": [
+    { "id": "freedict", "enabled": true },
+    { "id": "thesaurus", "enabled": true },
+    { "id": "cambridge", "enabled": true },
+    { "id": "bing", "enabled": false },
+    { "id": "wordinfo", "enabled": true },
+    { "id": "vocabulary", "enabled": true },
+    { "id": "rhymezone", "enabled": true }
+  ]
+}
