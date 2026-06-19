@@ -1,6 +1,6 @@
 # Reader Book Lite — Full Session Context
 
-> This file contains the complete modification history for AI assistants to resume work. Last updated: 2026-06-15 (session 3).
+> This file contains the complete modification history for AI assistants to resume work. Last updated: 2026-06-19 (session 4).
 
 ## Project Goal
 
@@ -406,6 +406,130 @@ The toolbar is rendered in MarkPanel's template (compiled into `index.js`). `che
 - Cleaned up temporary debug files (`tmp_*.js`, `tmp_queries_check.txt`)
 - Commit: `5c8409f` — pushed to `origin/master`
 
+## Feature: Global Selection Popup
+
+Provides dictionary/translate/search on **any** text selection in SiYuan (editor, cards, dialogs, etc.) via the native right-click context menu, plus a floating cut/copy/paste toolbar on mouseup selection.
+
+### Architecture
+
+```
+initGlobalSelPopup(u)
+├── Part 1: Floating toolbar (dict → translate → search → sep → cut → copy → paste)
+│   ├── Injects dynamic <style> for toolbar CSS
+│   ├── Creates <div id="sireader-global-toolbar"> with 7 buttons:
+│   │   ├── Dictionary (#iconLanguage) → mz(text, x, y, {text}) — openDict
+│   │   ├── Translate (#iconTranslate) → translateGoogle() + st.showMessage
+│   │   ├── Search Google (#iconSearch) → window.open
+│   │   ├── ─── (.sr-global-sep separator)
+│   │   ├── Cut  (#iconCut)     → navigator.clipboard.writeText + Range.deleteContents
+│   │   ├── Copy (#iconCopy)    → navigator.clipboard.writeText
+│   │   └── Paste(#iconPaste)   → navigator.clipboard.readText + Range.insertNode
+│   │                              (replaces selected text: deleteContents + insertNode)
+│   ├── mouseup listener (capture phase) → positions toolbar above selection rect
+│   ├── Guards: skips .sr-popup, .sr-popup-panel, epub-view, .epub-container,
+│   │   .epub-reader, .epub-toolbar, .mark-menu
+│   ├── scroll listener (capture) + Escape key → hides toolbar
+│   └── click listener on toolbar → dispatches action, hides
+│
+└── Part 2: Right-click context menu (translate only)
+    └── u.eventBus.on("open-menu-content", handler)
+        ├── Guard: returns if no range or empty text
+        └── Adds "Translating..." item (async label via bind callback)
+            ├── click → translateGoogle() + st.showMessage
+            └── bind → fetches translation, updates .b3-menu__label textContent,
+                adjusts style for long results (maxWidth 380px, wordBreak, lineHeight)
+```
+
+### Key Design Decisions
+
+1. **Two mechanisms for two use cases**: The floating toolbar (mouseup) handles quick clipboard ops (cut/copy/paste). The right-click menu (via SiYuan's `open-menu-content` event bus) handles lookup operations (dict/translate/search), following the exact pattern from the reference plugin `siyuan-dictionary`.
+
+2. **`open-menu-content` event**: SiYuan's native event bus fires this when the user right-clicks on selected text **anywhere** in the app (blocks, editor, cards, dialogs) except PDF viewers. The event provides `event.detail.range` (the selected Range) and `event.detail.menu` (a Menu object with `addItem`). The `addItem` method accepts `{icon, label, click, bind}` where `bind` is called when the menu element is rendered, allowing async label updates.
+
+3. **Async label update via `bind`**: The Translate menu item initially shows "Translating...", then `translateGoogle()` runs and updates the label text asynchronously. Long translations get word-wrap styles. This matches the siyuan-dictionary reference plugin's pattern.
+
+4. **Icon IDs**: Uses `"iconLanguage"`, `"iconTranslate"`, `"iconSearch"` — these are SVG symbol IDs registered by reader-book-lite's SVG sprite (injected during initialization). SiYuan's menu system resolves these from the document's `<svg>` symbol definitions.
+
+5. **Guard selectors**: Same as floating toolbar — prevents double-popup when reader is active.
+
+6. **`addIcons` not needed**: Unlike the siyuan-dictionary plugin which explicitly calls `this.addIcons()`, reader-book-lite's icons are already in the document's SVG sprite from the bundle initialization code. The icons available include `#iconTranslate`, `#iconLanguage`, `#iconSearch`, `#iconCut`, `#iconCopy`, `#iconPaste`, etc.
+
+### Reference Plugin
+
+Based on [siyuan-dictionary](https://github.com/mwolfinspace/siyuan-dictionary) (`index.js`):
+
+```javascript
+const { Plugin } = require("siyuan");
+module.exports = class DictionaryPlugin extends Plugin {
+  onload() {
+    this._onOpenMenuContent = this.onOpenMenuContent.bind(this);
+    this.eventBus.on("open-menu-content", this._onOpenMenuContent);
+  }
+  onOpenMenuContent(event) {
+    const range = event.detail.range;
+    if (!range) return;
+    const text = range.toString().trim();
+    if (!text) return;
+    const item = {
+      icon: "iconTranslate",
+      label: "Đang dịch...",
+      click: function () { window.open(url, "_blank"); },
+      bind: function (el) {
+        // async label update
+      }
+    };
+    event.detail.menu.addItem(item);
+  }
+  async translate(text) {
+    // Google Translate API call
+  }
+};
+```
+
+### Minified Name Dependencies
+
+| Name | Function | Defined at |
+|------|----------|------------|
+| `mz` | `openDict` | Top-level `async function mz(u,f,c,d)` |
+| `translateGoogle` | Google Translate | Top-level `async function translateGoogle(u,f="en")` |
+| `st` | SiYuan API module | `const st=require("siyuan")` |
+| `window.__sireader_tgt` | Target language | Set by TranslatePanel click handler |
+| `u.eventBus` | Plugin eventBus | Inherited from `Plugin` class (prototype) |
+
+### CSS (injected inline, floating toolbar only)
+
+```css
+#sireader-global-toolbar {
+  position: fixed; display: none; gap: 2px; padding: 3px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  z-index: 10000; align-items: center; font-size: 0;
+}
+#sireader-global-toolbar button {
+  width: 28px; height: 28px; padding: 0; border: none; border-radius: 4px;
+  background: transparent; color: var(--b3-theme-on-surface);
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all .15s;
+}
+#sireader-global-toolbar button:hover {
+  background: var(--b3-theme-background); transform: scale(1.05);
+}
+#sireader-global-toolbar button svg { width: 14px; height: 14px; }
+#sireader-global-toolbar .sr-global-sep {
+  width: 1px; height: 20px; background: var(--b3-border-color); margin: 0 3px;
+}
+```
+
+### Limitations
+
+- **Paste in SiYuan Protyle**: `navigator.clipboard.readText()` + `Range.insertNode` works in simple contenteditable areas but may not handle Protyle's block-based editor.
+- **Mobile**: Floating toolbar depends on `mouseup`; no `touchend` handler. Translate context menu works on mobile via long-press.
+- **Translate result**: Shows via `st.showMessage()` notification bar when clicked; label update shows in menu via `bind`.
+- **Multiple selections**: Only handles first range from `getSelection()`.
+- **PDF**: SiYuan's `open-menu-content` event does not fire inside PDF viewers; PDF text selection is handled by the reader's native popup.
+
 ## Next Potential Work
 
 1. Expose the English-only i18n toggle as a setting option
@@ -413,3 +537,4 @@ The toolbar is rendered in MarkPanel's template (compiled into `index.js`). `che
 3. Update translator engine API keys handling (Google/Azure/Yandex keys)
 4. Add more CJK→non-CJK conversion data mappings if needed
 5. Test all features end-to-end in SiYuan desktop app
+6. Add `touchend` handler for mobile floating toolbar support
