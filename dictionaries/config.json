@@ -35,12 +35,33 @@
     }
   ],
   "online": [
-    { "id": "freedict", "enabled": true },
-    { "id": "thesaurus", "enabled": true },
-    { "id": "cambridge", "enabled": true },
-    { "id": "bing", "enabled": false },
-    { "id": "wordinfo", "enabled": true },
-    { "id": "vocabulary", "enabled": true },
-    { "id": "rhymezone", "enabled": true }
+    {
+      "id": "freedict",
+      "enabled": true
+    },
+    {
+      "id": "thesaurus",
+      "enabled": true
+    },
+    {
+      "id": "cambridge",
+      "enabled": true
+    },
+    {
+      "id": "bing",
+      "enabled": true
+    },
+    {
+      "id": "wordinfo",
+      "enabled": true
+    },
+    {
+      "id": "vocabulary",
+      "enabled": true
+    },
+    {
+      "id": "rhymezone",
+      "enabled": true
+    }
   ]
 }
