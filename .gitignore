@@ -1,2 +1,4 @@
 *.bak
 node_modules/
+release.ps1
+*.zip

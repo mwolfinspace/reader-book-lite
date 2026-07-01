@@ -2,7 +2,7 @@
   "name": "reader-book-lite",
   "author": "community",
   "url": "https://github.com/mwolfinspace/reader-book-lite",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "2.10.14",
   "disabledInPublish": true,
   "backends": [
